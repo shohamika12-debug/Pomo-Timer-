@@ -55,6 +55,7 @@
       flex-direction: column;
       align-items: center;
       position: relative;
+      overflow: hidden;
     }
 
     /* Header Bar */
@@ -304,6 +305,130 @@
       filter: saturate(110%);
       transform: scale(1.15);
     }
+
+    /* Pink Settings Modal Overlay */
+    .settings-modal {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 240, 245, 0.96);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      padding: 32px 24px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .settings-modal.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .settings-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .settings-header h2 {
+      font-family: 'Comfortaa', 'Nunito', cursive, sans-serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text-pink);
+    }
+
+    .close-settings-btn {
+      background: #ffffff;
+      border: 1px solid #f9dbe8;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      color: var(--text-pink);
+      font-size: 1rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .close-settings-btn:hover {
+      background: #fde2ec;
+    }
+
+    .settings-body {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      flex: 1;
+    }
+
+    .setting-group {
+      background: #ffffff;
+      padding: 14px 16px;
+      border-radius: 20px;
+      border: 1.5px solid #f9dbe8;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(235, 79, 124, 0.05);
+    }
+
+    .setting-group label {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-pink);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .setting-group input {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1.5px solid #f5c2d3;
+      background: #fff8fb;
+      font-family: 'Nunito', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-pink);
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .setting-group input:focus {
+      border-color: var(--text-pink);
+    }
+
+    .save-settings-btn {
+      width: 100%;
+      height: 52px;
+      border: none;
+      border-radius: 18px;
+      background: var(--pink-gradient);
+      color: #ffffff;
+      font-family: 'Nunito', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(247, 112, 151, 0.3);
+      transition: all 0.2s ease;
+      margin-top: auto;
+    }
+
+    .save-settings-btn:hover {
+      opacity: 0.95;
+      transform: translateY(-2px);
+    }
   </style>
 </head>
 <body>
@@ -374,11 +499,34 @@
       </div>
     </div>
 
+    <!-- Custom Pink Settings Modal Screen -->
+    <div class="settings-modal" id="settingsModal">
+      <div class="settings-header">
+        <h2>Timer Settings</h2>
+        <button class="close-settings-btn" onclick="closeSettings()">✕</button>
+      </div>
+      <div class="settings-body">
+        <div class="setting-group">
+          <label>🌷 Work Duration (minutes)</label>
+          <input type="number" id="workInput" min="1" max="120" value="25" />
+        </div>
+        <div class="setting-group">
+          <label>🥥 Short Break (minutes)</label>
+          <input type="number" id="shortInput" min="1" max="60" value="5" />
+        </div>
+        <div class="setting-group">
+          <label>🏝️ Long Break (minutes)</label>
+          <input type="number" id="longInput" min="1" max="60" value="15" />
+        </div>
+        <button class="save-settings-btn" onclick="saveSettings()">Save Changes</button>
+      </div>
+    </div>
+
   </div>
 
   <script>
     // Configurations
-    const MODES = {
+    let MODES = {
       work: { time: 25 * 60, subtitle: 'TIME TO FOCUS 🪽', icon: '🌷' },
       shortBreak: { time: 5 * 60, subtitle: 'SHORT BREAK 🥥', icon: '🥥' },
       longBreak: { time: 15 * 60, subtitle: 'LONG BREAK 🏝️', icon: '🏝️' }
@@ -404,6 +552,7 @@
     const modeTabs = document.querySelectorAll('.mode-tab');
     const sessionCountText = document.getElementById('sessionCountText');
     const sessionIcons = document.querySelectorAll('.session-icon');
+    const settingsModal = document.getElementById('settingsModal');
 
     const CIRCUMFERENCE = 2 * Math.PI * 100;
 
@@ -576,7 +725,24 @@
     }
 
     function openSettings() {
-      alert("Settings: Default timer is set to Pomodoro standard (25 min Work, 5 min Short Break, 15 min Long Break).");
+      settingsModal.classList.add('open');
+    }
+
+    function closeSettings() {
+      settingsModal.classList.remove('open');
+    }
+
+    function saveSettings() {
+      const workMin = parseInt(document.getElementById('workInput').value);
+      const shortMin = parseInt(document.getElementById('shortInput').value);
+      const longMin = parseInt(document.getElementById('longInput').value);
+
+      if (workMin > 0) MODES.work.time = workMin * 60;
+      if (shortMin > 0) MODES.shortBreak.time = shortMin * 60;
+      if (longMin > 0) MODES.longBreak.time = longMin * 60;
+
+      closeSettings();
+      switchMode(currentMode);
     }
 
     updateDisplay();
